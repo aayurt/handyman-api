@@ -1,0 +1,29 @@
+name: Deploy Flutter Web to Server
+
+on:
+  push:
+    branches:
+      - dev
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+  
+      - name: Updating the node server
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          passphrase: ${{ secrets.SSH_PASSPHRASE }}
+          port: ${{ secrets.SERVER_PORT }}
+          script: |
+            source /home/koselikh/nodevenv/cv-back.aayurtshrestha.com.np/16/bin/activate
+            cd /home/koselikh/cv-back.aayurtshrestha.com.np
+            git pull origin dev && npm install
+
+     
+       
