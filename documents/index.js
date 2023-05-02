@@ -1,5 +1,4 @@
 module.exports = (values) => {
-  console.log(values);
   const {
     // Profile-Information
     name,
