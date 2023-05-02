@@ -23,7 +23,7 @@ jobs:
           script: |
             source /home/koselikh/nodevenv/cv-back.aayurtshrestha.com.np/16/bin/activate
             cd /home/koselikh/cv-back.aayurtshrestha.com.np
-            git pull origin dev && npm install
+            git pull origin dev
 
      
        
