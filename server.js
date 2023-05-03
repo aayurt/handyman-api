@@ -1,10 +1,16 @@
 const express = require('express');
 const mongoose = require('mongoose');
 require('dotenv').config();
+const compression = require('compression');
+var cors = require('cors');
+const helmet = require('helmet');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
-
+app.use(compression());
+app.use(helmet());
+app.use(cors());
+app.options('*', cors());
 app.use(express.json());
 
 // DB config
