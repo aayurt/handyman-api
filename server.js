@@ -8,11 +8,11 @@ const PORT = process.env.PORT || 5000;
 app.use(express.json());
 
 // DB config
-const db = require('./config/keys').mongoURI;
+const db = require('./config/keys');
 
 // Connect to DB
 mongoose
-  .connect(db, {
+  .connect(db.mongoURI, {
     dbName: db.dbName,
   })
   .then(() => console.log('Connected to database'))
