@@ -7,6 +7,7 @@ const generateListing = (contractor, id) => {
       id: contractor._id,
       name: contractor.name,
       email: contractor.email,
+      location: contractor.location,
     },
     title: faker.lorem.word(),
     numApps: faker.number.int(),

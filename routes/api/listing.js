@@ -42,6 +42,7 @@ router.post('/', auth('Contractor'), (req, res) => {
             id: user._id,
             name: user.name,
             email: user.email,
+            location: user.location,
           },
         });
         newListing
