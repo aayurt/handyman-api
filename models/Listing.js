@@ -25,6 +25,17 @@ const ListingSchema = new Schema({
     id: { type: Schema.Types.ObjectId, ref: 'Contractor', required: true },
     name: { type: String, required: true },
     email: { type: String, required: true },
+    location: {
+      type: {
+        type: String,
+        enum: ['Point'],
+        required: true,
+      },
+      coordinates: {
+        type: [Number], // [longitude, latitude]
+        required: true,
+      },
+    },
   },
   deleted: { type: Boolean, default: false },
 });

@@ -149,6 +149,7 @@ router.put('/:id', auth('Contractor'), (req, res) => {
             {
               'contractor.name': updatedUser.name,
               'contractor.email': updatedUser.email,
+              'contractor.location': updatedUser.location,
             }
           ).then(() => {
             const { password, ...userToSend } = updatedUser.toObject();

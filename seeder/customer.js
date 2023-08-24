@@ -2,9 +2,25 @@ const { faker } = require('@faker-js/faker');
 const bcrypt = require('bcryptjs');
 
 const generateRandomLocation = () => {
+  // Define longitude and latitude ranges for London
+  const londonLongitudeRange = [0.127, 0.127999999]; // Example range for longitude
+  const londonLatitudeRange = [51.5111111, 51.5999999]; // Example range for latitude
+
+  // Generate random coordinates within London ranges
+  const longitude = faker.number.float({
+    min: londonLongitudeRange[0],
+    max: londonLongitudeRange[1],
+    precision: 0.000001,
+  });
+  const latitude = faker.number.float({
+    min: londonLatitudeRange[0],
+    max: londonLatitudeRange[1],
+    precision: 0.000001,
+  });
+
   return {
     type: 'Point',
-    coordinates: [faker.location.longitude(), faker.location.latitude()],
+    coordinates: [latitude, longitude],
   };
 };
 
