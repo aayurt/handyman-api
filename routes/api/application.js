@@ -1,133 +1,278 @@
-const express = require("express");
+const express = require('express');
 const router = express.Router();
+const jwt = require('jsonwebtoken');
+const moment = require('moment');
 
 // Authorization middleware
-const auth = require("../../middleware/auth");
+const auth = require('../../middleware/auth');
 
 // models
-const Application = require("../../models/Application");
-const Applicant = require("../../models/Applicant");
-const Listing = require("../../models/Listing");
+const Application = require('../../models/Application');
+const Customer = require('../../models/Customer');
+const Listing = require('../../models/Listing');
+const Category = require('../../models/Category');
 
-const statuses = ["Applied", "Shortlisted", "Rejected", "Accepted"];
+const statuses = ['Applied', 'Shortlisted', 'Rejected', 'Accepted'];
 
 // Create Application
-router.post("/", auth("Applicant"), async function (req, res) {
-  const { listingId, applicantId, sop } = req.body;
-  if (!sop) return res.status(400).json({ msg: "Please enter SOP" });
+router.post('/', async function (req, res) {
+  const { listingId, selectedTimeSlots } = req.body;
+  const token = req.headers.authorization.split('Bearer ')[1];
+  if (!token) return res.status(401).json({ msg: 'No token' });
 
-  const applicant = await Applicant.findById(applicantId);
+  const decoded = jwt.verify(token, jwtSecret);
+  const user = decoded;
+
+  if (user.type === 'Contractor') {
+    return res.sendStatus(400);
+  }
+  const customerId = user.id;
   const listing = await Listing.findById(listingId);
-  if (!applicant || !listing) return res.sendStatus(400);
+  if (!listing) return res.sendStatus(400);
 
-  const applicantApplications = await Application.find({ applicantId });
+  const customerApplications = await Application.find({ customer: customerId });
   let numActive = 0;
-  for (let application of applicantApplications) {
-    if (application.status === "Accepted")
+  for (let application of customerApplications) {
+    if (application.status === 'Accepted')
       return res
         .status(400)
         .json({ msg: "Can't apply when already accepted into a job" });
-    if (application.status !== "Deleted" || application.status !== "Rejected")
+    if (application.status !== 'Deleted' || application.status !== 'Rejected')
       numActive += 1;
   }
-  if (numActive >= 10)
-    return res.status(400).json({ msg: "Can't apply to more than 10 jobs" });
+  // if (numActive >= 10)
+  //   return res.status(400).json({ msg: "Can't apply to more than 10 jobs" });
 
   if (listing.deadlineDate < Date.now())
-    return res.status(400).json({ msg: "Deadline passed" });
+    return res.status(400).json({ msg: 'Deadline passed' });
 
-  const application = await Application.findOne({ listingId, applicantId });
-  if (application) return res.status(400).json({ msg: "Already applied" });
+  const application = await Application.findOne({
+    listing: listingId,
+    customer: customerId,
+  });
+  if (application) return res.status(400).json({ msg: 'Already applied' });
 
-  if (listing.numApps >= listing.maxApps)
-    return res.status(400).json({ msg: "Maximum applications reached" });
+  const formattedTimeSlotData = {};
 
-  const newApplication = new Application({ listingId, applicantId, sop });
+  Object.keys(selectedTimeSlots).forEach((dateString) => {
+    formattedTimeSlotData[moment(dateString).format('L')] =
+      selectedTimeSlots[dateString];
+  });
+
+  const newApplication = new Application({
+    listing: listingId,
+    customer: customerId,
+    selectedTimeSlots: formattedTimeSlotData,
+  });
   newApplication
     .save()
     .then((application) => {
       Listing.findByIdAndUpdate(listingId, { $inc: { numApps: 1 } })
         .then(() => res.json({ application }))
-        .catch((err) => res.status(500).json({ msg: "Internal error" }));
+        .catch((err) => res.status(500).json({ msg: 'Internal error' }));
     })
-    .catch((err) => res.status(500).json({ msg: "Internal error" }));
+    .catch((err) => {
+      return res.status(500).json({ msg: 'Internal error' });
+    });
 });
 
-// Get applications by applicant
-router.get("/byapplicant/:applicantid", (req, res) => {
-  const applicantId = req.params.applicantid;
-  Application.find({ applicantId: applicantId })
+// Get applications by customer
+router.get('/bycustomer', (req, res) => {
+  const token = req.headers.authorization.split('Bearer ')[1];
+  if (!token) return res.status(401).json({ msg: 'No token' });
+
+  const decoded = jwt.verify(token, jwtSecret);
+  const user = decoded;
+
+  if (user.type === 'Contractor') {
+    return res.sendStatus(400);
+  }
+  const customerId = user.id;
+  Application.find({ customer: customerId })
     .lean()
-    .then((applications) => res.json({ applications }))
+    .populate({
+      path: 'customer listing',
+    })
+    .then(async (applications) => {
+      const newApplicationPromises = applications.map(async (element) => {
+        const application = { ...element };
+
+        const categoryId = application['listing']['category'] || '';
+        if (categoryId) {
+          const category = await Category.findById(categoryId);
+          application['listing']['category'] = category;
+          return application;
+        }
+        return application;
+      });
+      const newApplications = await Promise.all(newApplicationPromises);
+      return res.json({ data: newApplications });
+    })
     .catch((err) => {
       return res.sendStatus(400);
     });
 });
 
 // Get applications by listing
-router.get("/bylisting/:listingid", (req, res) => {
+router.get('/bylisting/:listingid', (req, res) => {
   const listingId = req.params.listingid;
-  Application.find({ listingId: listingId })
+  Application.find({ listing: listingId })
+    .populate({
+      path: 'customer listing',
+    })
     .lean()
-    .then((applications) => res.json({ applications }))
+    .then(async (applications) => {
+      const newApplicationPromises = applications.map(async (element) => {
+        const application = { ...element };
+
+        const categoryId = application['listing']['category'] || '';
+        if (categoryId) {
+          const category = await Category.findById(categoryId);
+          application['listing']['category'] = category;
+          return application;
+        }
+        return application;
+      });
+      const newApplications = await Promise.all(newApplicationPromises);
+      return res.json({ data: newApplications });
+    })
+    .catch((err) => {
+      return res.sendStatus(400);
+    });
+});
+router.get('/app/:id', (req, res) => {
+  const id = req.params.id;
+  Application.findById(id)
+    .lean()
+    .populate({
+      path: 'customer listing',
+    })
+    .then(async (application) => {
+      const newApplication = { ...application };
+
+      const categoryId = newApplication['listing']['category'] || '';
+      if (categoryId) {
+        const category = await Category.findById(categoryId);
+
+        newApplication['listing']['category'] = category;
+      }
+
+      return res.json({ data: newApplication });
+    })
     .catch((err) => {
       return res.sendStatus(400);
     });
 });
 
-// Get applications by recruiter
-router.get("/byrecruiter/:recruiterid", async function (req, res) {
+// Get applications by contractor
+router.get('/bycontractor', async function (req, res) {
   try {
-    const recruiterId = req.params.recruiterid;
-    let listings = await Listing.find({ "recruiter.id": recruiterId });
+    const token = req.headers.authorization.split('Bearer ')[1];
+    if (!token) return res.status(401).json({ msg: 'No token' });
+
+    const decoded = jwt.verify(token, jwtSecret);
+    const user = decoded;
+
+    if (user.type === 'Customer') {
+      return res.sendStatus(400);
+    }
+    const contractorId = user.id;
+
+    let listings = await Listing.find({ 'contractor.id': contractorId });
     listings = listings.map((listing) => listing.id);
-    let applications = await Application.find({ listingId: { $in: listings } });
-    return res.json({ applications });
+    console.log('listings', listings);
+
+    Application.find({
+      listing: { $in: listings },
+    })
+      .lean()
+      .populate({
+        path: 'customer listing',
+      })
+      .then(async (applications) => {
+        console.log('applications', applications);
+
+        const newApplicationPromises = applications.map(async (element) => {
+          const application = { ...element };
+          if (
+            application &&
+            application['listing'] &&
+            application['listing']['category']
+          ) {
+            const categoryId = application['listing']['category'] || '';
+            if (categoryId) {
+              const category = await Category.findById(categoryId);
+              application['listing']['category'] = category;
+              return application;
+            }
+            return application;
+          } else {
+            return application;
+          }
+        });
+        const newApplications = await Promise.all(newApplicationPromises);
+        return res.json({ data: newApplications });
+      });
   } catch {
-    return res.status(500).json({ msg: "Internal error" });
+    return res.status(500).json({ msg: 'Internal error' });
   }
 });
 
 // Update application
-router.put("/:id", auth("Recruiter"), async function (req, res) {
+router.put('/:id', async function (req, res) {
   const id = req.params.id;
-  const { status } = req.body;
 
-  if (!statuses.includes(status)) return res.sendStatus(400);
+  const { status, selectedTimeSlots } = req.body;
+
+  const token = req.headers.authorization.split('Bearer ')[1];
+  if (!token) return res.status(401).json({ msg: 'No token' });
+
+  const decoded = jwt.verify(token, jwtSecret);
+  const user = decoded;
 
   const application = await Application.findById(id);
   if (!application) return res.sendStatus(400);
-  if (application.closeDate < Date.now())
-    return res.status(400).json({ msg: "Application already closed" });
 
-  if (status === "Accepted") {
-    const listing = await Listing.findById(application.listingId);
-    if (listing.numAccepted >= listing.maxPos)
-      return res.status(400).json({ msg: "Job full" });
+  if (application.status === 'pending' && user.type === 'Customer') {
+    const formattedTimeSlotData = {};
 
-    // listing.numAccepted = listing.numAccepted + 1;
-    if (listing.numAccepted + 1 >= listing.maxPos) {
+    Object.keys(selectedTimeSlots).forEach((dateString) => {
+      formattedTimeSlotData[moment(dateString).format('L')] =
+        selectedTimeSlots[dateString];
+    });
+    application.selectedTimeSlots = formattedTimeSlotData;
+    application
+      .save()
+      .then((application) => {
+        res.json({ data: application });
+      })
+      .catch((e) => {
+        return res.status(400).json({ msg: 'Error' });
+      });
+  } else {
+    if (!status) return res.sendStatus(400);
+
+    if (application.closeDate < Date.now())
+      return res.status(400).json({ msg: 'Application already closed' });
+
+    if (status === 'Accepted') {
+      const listing = await Listing.findById(application.listingId);
+
+      // listing.numAccepted = listing.numAccepted + 1;
+
       await Application.updateMany(
-        {
-          listingId: application.listingId,
-          status: { $ne: "Accepted" },
-          _id: { $ne: id },
-        },
-        { status: "Rejected", closeDate: Date.now() }
+        { customer: application.customerId, _id: { $ne: id } },
+        { status: 'Rejected', closeDate: Date.now() }
       );
+      listing.numAccepted += 1;
+      await listing.save();
     }
-    await Application.updateMany(
-      { applicantId: application.applicantId, _id: { $ne: id } },
-      { status: "Rejected", closeDate: Date.now() }
-    );
-    listing.numAccepted += 1;
-    await listing.save();
+    application.status = status;
+    if (status === 'Accepted' || status === 'Rejected')
+      application.closeDate = Date.now();
+    const updatedApplication = await application.save();
+    res.json({ application: updatedApplication });
   }
-  application.status = status;
-  if (status === "Accepted" || status === "Rejected")
-    application.closeDate = Date.now();
-  const updatedApplication = await application.save();
-  res.json({ application: updatedApplication });
 });
 
 module.exports = router;

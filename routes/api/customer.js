@@ -9,16 +9,17 @@ jwtSecret = require('../../config/keys').jwtSecret;
 // Authorization middleware
 const auth = require('../../middleware/auth');
 
-// Applicant model
-const Applicant = require('../../models/Applicant');
+// Customer model
+const Customer = require('../../models/Customer');
 const Application = require('../../models/Application');
 const Listing = require('../../models/Listing');
 
-// Register applicant
+// Register customer
 router.post('/', (req, res) => {
-  let { name, email, password } = req.body;
+  let { name, email, password, phone, avatar, address, location, gender } =
+    req.body;
 
-  if (!name || !email || !password)
+  if (!name || !email || !password || !phone)
     return res.status(400).json({ msg: 'Enter all credentials' });
 
   // Validations
@@ -27,15 +28,25 @@ router.post('/', (req, res) => {
   if (!emailRe.test(email)) {
     return res.status(400).json({ msg: 'Invalid email' });
   }
-
-  Applicant.findOne({ email })
+  phone = phone.trim();
+  const phoneRe = /^[0-9]{4}$/;
+  if (!phoneRe.test(phone)) {
+    return res.status(400).json({ msg: 'Invalid phone number' });
+  }
+  Customer.findOne({ email })
     .then((user) => {
       if (user) return res.status(400).json({ msg: 'User already exists' });
-      const newUser = new Applicant({ name, email, password });
-      newUser.skills = [];
-      newUser.education = [];
-      newUser.interests = [];
-      newUser.experiences = [];
+      const newUser = new Customer({
+        name,
+        email,
+        password,
+        gender,
+        phone,
+        avatar,
+        address,
+      });
+      newUser.bio = '';
+
       bcrypt.genSalt(10, (err, salt) => {
         if (err) throw err;
         bcrypt.hash(newUser.password, salt, (err, hash) => {
@@ -46,15 +57,15 @@ router.post('/', (req, res) => {
             .then((user) => {
               const { password, ...userToSend } = user.toObject();
               jwt.sign(
-                { id: newUser.id, type: 'Applicant' },
+                { id: newUser.id, type: 'Customer' },
                 jwtSecret,
                 { expiresIn: 3600 },
                 (err, token) => {
                   if (err) throw err;
                   res.json({
-                    token,
+                    accessToken: token,
                     user: userToSend,
-                    userType: 'Applicant',
+                    userType: 'Customer',
                   });
                 }
               );
@@ -70,17 +81,17 @@ router.post('/', (req, res) => {
     });
 });
 
-// Get all applicants
+// Get all customers
 router.get('/', (req, res) => {
-  Applicant.find({})
-    .then((applicants) => res.send({ applicants }))
+  Customer.find({})
+    .then((customers) => res.send({ customers }))
     .catch((err) => res.sendStatus(400));
 });
 
-// Get a applicant
+// Get a customer
 router.get('/:id', (req, res) => {
   const id = req.params.id;
-  Applicant.findById(id)
+  Customer.findById(id)
     .select('-password')
     .lean()
     .then((user) => res.json({ user }))
@@ -89,12 +100,12 @@ router.get('/:id', (req, res) => {
     });
 });
 
-// Get applicants by listing
+// Get customers by listing
 router.get('/bylisting/:listingid', async function (req, res) {
   const listingId = req.params.listingid;
   let applications = await Application.find({ listingId });
-  applications = applications.map((application) => application.applicantId);
-  Applicant.find({ _id: { $in: applications } })
+  applications = applications.map((application) => application.customerId);
+  Customer.find({ _id: { $in: applications } })
     .select('-password')
     .lean()
     .then((users) => res.json({ users }))
@@ -103,11 +114,11 @@ router.get('/bylisting/:listingid', async function (req, res) {
     });
 });
 
-// Get applicants accepted by recruiter
-router.get('/byrecruiter/:recruiterid', async function (req, res) {
+// Get customers accepted by contractor
+router.get('/bycontractor/:contractorid', async function (req, res) {
   try {
-    const recruiterId = req.params.recruiterid;
-    let listings = await Listing.find({ 'recruiter.id': recruiterId });
+    const contractorId = req.params.contractorid;
+    let listings = await Listing.find({ 'contractor.id': contractorId });
     const listingIds = listings.map((listing) => listing.id);
     let applications = await Application.find({
       listingId: { $in: listingIds },
@@ -116,63 +127,50 @@ router.get('/byrecruiter/:recruiterid', async function (req, res) {
       (application) => application.status === 'Accepted'
     );
     const acceptedIds = applications.map(
-      (application) => application.applicantId
+      (application) => application.customerId
     );
-    let applicants = await Applicant.find({ _id: { $in: acceptedIds } });
-    applicants = applicants.map((applicant) => {
+    let customers = await Customer.find({ _id: { $in: acceptedIds } });
+    customers = customers.map((customer) => {
       let application = applications.find(
-        (application) => application.applicantId == applicant.id
+        (application) => application.customerId == customer.id
       );
       let listing = listings.find((l) => l.id == application.listingId);
       return {
-        id: applicant.id,
-        name: applicant.name,
-        jobType: listing.jobType,
+        id: customer.id,
+        name: customer.name,
         title: listing.title,
         joiningDate: application.closeDate,
         rating:
-          applicant.numRatings === 0
+          customer.numRatings === 0
             ? 0
-            : applicant.ratingSum / applicant.numRatings,
+            : customer.ratingSum / customer.numRatings,
       };
     });
-    return res.json({ applicants });
+    return res.json({ customers });
   } catch (err) {
     console.log(err);
     return res.status(500).json({ msg: 'Internal error' });
   }
 });
 
-// Update applicant
-router.put('/:id', auth('Applicant'), (req, res) => {
+// Update customer
+router.put('/:id', auth('Customer'), (req, res) => {
   const id = req.params.id;
-  const {
-    name,
-    email,
-    phone,
-    skills,
-    education,
-    interests,
-    experiences,
-    linkedIn,
-    github,
-    website,
-  } = req.body;
+  const { name, email, phone, bio, avatar, address, location } = req.body;
 
   // TODO Validation
 
-  Applicant.findById(id)
+  Customer.findById(id)
     .then((user) => {
       if (name) user.name = name;
       if (email) user.email = email;
+      if (gender) user.gender = gender;
       if (phone) user.phone = phone;
-      if (skills) user.skills = skills;
-      if (education) user.education = education;
-      if (interests) user.interests = interests;
-      if (experiences) user.experiences = experiences;
-      if (linkedIn) user.linkedIn = linkedIn;
-      if (github) user.github = github;
-      if (website) user.website = website;
+
+      if (bio || bio === '') user.bio = bio;
+      if (avatar) user.avatar = avatar;
+      if (address) user.address = address;
+      if (location) user.location = location;
       user.save().then((updatedUser) => {
         const { password, ...userToSend } = updatedUser.toObject();
         res.json({ user: userToSend });

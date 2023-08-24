@@ -1,20 +1,30 @@
-const mongoose = require("mongoose");
+const mongoose = require('mongoose');
+const Customer = require('./Customer');
+const Listing = require('./Listing');
 const Schema = mongoose.Schema;
 
 const ApplicationSchema = new Schema({
-  listingId: { type: Schema.Types.ObjectId, ref: "Listing", required: true },
-  applicantId: {
+  listing: { type: Schema.Types.ObjectId, ref: Listing, required: true },
+  customer: {
     type: Schema.Types.ObjectId,
-    ref: "Applicant",
+    ref: Customer,
     required: true,
   },
-  status: { type: String, required: true, default: "Applied" },
+  status: {
+    type: String,
+    required: true,
+    enum: ['pending', 'processing', 'ordered', 'cancelled'],
+    default: 'pending',
+  },
   appDate: { type: Date, required: true, default: Date.now },
   closeDate: {
     type: Date,
     default: () => Date.now() + 2 * 365 * 24 * 3600 * 1000,
   },
-  sop: { type: String, default: "" },
+  selectedTimeSlots: {
+    type: Map,
+    of: [{ type: String }],
+  },
 });
 
-module.exports = Application = mongoose.model("Application", ApplicationSchema);
+module.exports = Application = mongoose.model('Application', ApplicationSchema);

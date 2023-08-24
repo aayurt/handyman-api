@@ -5,6 +5,6 @@ module.exports = {
     process.env.NODE_ENV === 'production'
       ? process.env.DB_URL_PROD
       : process.env.DB_URL_DEV,
-  dbName: 'JobPortal',
+  dbName: 'Hman',
   jwtSecret: 'lmaosomething',
 };

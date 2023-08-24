@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const auth = require('../../middleware/auth');
-const Applicant = require('../../models/Applicant');
+const Customer = require('../../models/Customer');
 const pdfTemplate = require('../../documents');
 const { default: puppeteer } = require('puppeteer');
 var fs = require('fs');
@@ -14,7 +14,7 @@ router.get('/create-pdf/:id', (req, res) => {
     width: '35.7cm',
     timeout: '6000',
   };
-  Applicant.findById(id)
+  Customer.findById(id)
     .then(async (user) => {
       const browser = await puppeteer.launch();
       const page = await browser.newPage();

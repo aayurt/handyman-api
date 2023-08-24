@@ -5,11 +5,13 @@
   "main": "server.js",
   "scripts": {
     "dev": "nodemon server.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "seed": "node ./seeder/seeder.js"
   },
-  "author": "Aayurt Shrestha",
+  "author": "Nepalese bros",
   "license": "ISC",
   "dependencies": {
+    "@faker-js/faker": "^8.0.2",
     "bcryptjs": "^2.4.3",
     "compression": "^1.7.4",
     "cors": "^2.8.5",
@@ -17,8 +19,11 @@
     "express": "^4.17.1",
     "helmet": "^6.1.5",
     "jsonwebtoken": "^8.5.1",
+    "moment": "^2.29.4",
     "mongoose": "^7.0.3",
-    "puppeteer": "^19.11.1"
+    "multer": "^1.4.5-lts.1",
+    "puppeteer": "^19.11.1",
+    "sharp": "^0.32.5"
   },
   "devDependencies": {
     "nodemon": "^2.0.22"

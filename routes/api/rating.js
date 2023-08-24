@@ -1,32 +1,32 @@
-const express = require("express");
+const express = require('express');
 const router = express.Router();
 
 // Authorization middleware
-const auth = require("../../middleware/auth");
+const auth = require('../../middleware/auth');
 
 // models
-const JobRating = require("../../models/JobRating");
-const ApplicantRating = require("../../models/ApplicantRating");
-const Applicant = require("../../models/Applicant");
-const Listing = require("../../models/Listing");
+const JobRating = require('../../models/JobRating');
+const CustomerRating = require('../../models/CustomerRating');
+const Customer = require('../../models/Customer');
+const Listing = require('../../models/Listing');
 
-// Rate applicant
-router.post("/applicant", auth("Recruiter"), async function (req, res) {
-  const { value, recruiterId, applicantId } = req.body;
-  if (!value || !recruiterId || !applicantId) return res.sendStatus(400);
+// Rate customer
+router.post('/customer', auth('Contractor'), async function (req, res) {
+  const { value, contractorId, customerId } = req.body;
+  if (!value || !contractorId || !customerId) return res.sendStatus(400);
   if (value < 0 || value > 5)
-    return res.status(400).json({ msg: "Rating must be between 0 and 5" });
+    return res.status(400).json({ msg: 'Rating must be between 0 and 5' });
 
-  let rating = await ApplicantRating.findOne({ applicantId, recruiterId });
+  let rating = await CustomerRating.findOne({ customerId, contractorId });
   if (!rating) {
-    rating = new ApplicantRating({ recruiterId, applicantId, value });
-    await Applicant.findByIdAndUpdate(applicantId, {
+    rating = new CustomerRating({ contractorId, customerId, value });
+    await Customer.findByIdAndUpdate(customerId, {
       $inc: { numRatings: 1, ratingSum: value },
     });
     rating = await rating.save();
     return res.json({ rating });
   }
-  await Applicant.findByIdAndUpdate(applicantId, {
+  await Customer.findByIdAndUpdate(customerId, {
     $inc: { ratingSum: value - rating.value },
   });
   rating.value = value;
@@ -35,15 +35,15 @@ router.post("/applicant", auth("Recruiter"), async function (req, res) {
 });
 
 // Rate job
-router.post("/listing", auth("Applicant"), async function (req, res) {
-  const { value, listingId, applicantId } = req.body;
-  if (!value || !listingId || !applicantId) return res.sendStatus(400);
+router.post('/listing', auth('Customer'), async function (req, res) {
+  const { value, listingId, customerId } = req.body;
+  if (!value || !listingId || !customerId) return res.sendStatus(400);
   if (value < 0 || value > 5)
-    return res.status(400).json({ msg: "Rating must be between 0 and 5" });
+    return res.status(400).json({ msg: 'Rating must be between 0 and 5' });
 
-  let rating = await JobRating.findOne({ applicantId, listingId });
+  let rating = await JobRating.findOne({ customerId, listingId });
   if (!rating) {
-    rating = new JobRating({ listingId, applicantId, value });
+    rating = new JobRating({ listingId, customerId, value });
     await Listing.findByIdAndUpdate(listingId, {
       $inc: { numRatings: 1, ratingSum: value },
     });
@@ -53,33 +53,33 @@ router.post("/listing", auth("Applicant"), async function (req, res) {
   res.json({ rating });
 });
 
-// Find job ratings by applicant
-router.get("/listing/byapplicant/:applicantid", async function (req, res) {
-  const applicantId = req.params.applicantid;
-  const ratings = await JobRating.find({ applicantId });
+// Find job ratings by customer
+router.get('/listing/bycustomer/:customerid', async function (req, res) {
+  const customerId = req.params.customerid;
+  const ratings = await JobRating.find({ customerId });
   res.json({ ratings });
 });
 
-// Find applicant ratings by recruiter
-router.get("/applicant/byrecruiter/:recruiterid", async function (req, res) {
-  const recruiterId = req.params.recruiterid;
-  const ratings = await ApplicantRating.find({ recruiterId });
+// Find customer ratings by contractor
+router.get('/customer/bycontractor/:contractorid', async function (req, res) {
+  const contractorId = req.params.contractorid;
+  const ratings = await CustomerRating.find({ contractorId });
   res.json({ ratings });
 });
 
 // Find job rating
-router.get("/listing/:listingid/:applicantid", async function (req, res) {
-  const applicantId = req.params.applicantid;
-  const listingId = req.params.applicantid;
-  let rating = await JobRating.findOne({ applicantId, listingId });
+router.get('/listing/:listingid/:customerid', async function (req, res) {
+  const customerId = req.params.customerid;
+  const listingId = req.params.customerid;
+  let rating = await JobRating.findOne({ customerId, listingId });
   res.json({ rating });
 });
 
-// Find applicant rating
-router.get("/applicant/:applicantid/:recruiterid", async function (req, res) {
-  const applicantId = req.params.applicantid;
-  const recruiterId = req.params.recruiterid;
-  let rating = await ApplicantRating.findOne({ applicantId, recruiterId });
+// Find customer rating
+router.get('/customer/:customerid/:contractorid', async function (req, res) {
+  const customerId = req.params.customerid;
+  const contractorId = req.params.contractorid;
+  let rating = await CustomerRating.findOne({ customerId, contractorId });
   res.json({ rating });
 });
 
