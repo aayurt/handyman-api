@@ -1,6 +1,6 @@
-const mongoose = require('mongoose');
-const Customer = require('./Customer');
-const Listing = require('./Listing');
+const mongoose = require("mongoose");
+const Customer = require("./Customer");
+const Listing = require("./Listing");
 const Schema = mongoose.Schema;
 
 const ApplicationSchema = new Schema({
@@ -13,8 +13,8 @@ const ApplicationSchema = new Schema({
   status: {
     type: String,
     required: true,
-    enum: ['pending', 'processing', 'ordered', 'cancelled'],
-    default: 'pending',
+    enum: ["pending", "accepted", "completed", "cancelled"],
+    default: "pending",
   },
   appDate: { type: Date, required: true, default: Date.now },
   closeDate: {
@@ -27,4 +27,4 @@ const ApplicationSchema = new Schema({
   },
 });
 
-module.exports = Application = mongoose.model('Application', ApplicationSchema);
+module.exports = Application = mongoose.model("Application", ApplicationSchema);
