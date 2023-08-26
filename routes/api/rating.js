@@ -3,6 +3,7 @@ const router = express.Router();
 
 // Authorization middleware
 const auth = require('../../middleware/auth');
+const jwt = require('jsonwebtoken');
 
 // models
 const JobRating = require('../../models/JobRating');
@@ -36,19 +37,26 @@ router.post('/customer', auth('Contractor'), async function (req, res) {
 
 // Rate job
 router.post('/listing', auth('Customer'), async function (req, res) {
-  const { value, listingId, customerId } = req.body;
-  if (!value || !listingId || !customerId) return res.sendStatus(400);
+  const { value, listingId, note } = req.body;
+  const token = req.headers.authorization.split('Bearer ')[1];
+  if (!token) return res.status(401).json({ msg: 'No token' });
+
+  const decoded = jwt.verify(token, jwtSecret);
+  const user = decoded;
+
+  if (!value || !listingId) return res.sendStatus(400);
   if (value < 0 || value > 5)
     return res.status(400).json({ msg: 'Rating must be between 0 and 5' });
 
-  let rating = await JobRating.findOne({ customerId, listingId });
+  let rating = await JobRating.findOne({ customerId: user.id, listingId });
   if (!rating) {
-    rating = new JobRating({ listingId, customerId, value });
+    rating = new JobRating({ listingId, customerId: user.id, value, note });
     await Listing.findByIdAndUpdate(listingId, {
       $inc: { numRatings: 1, ratingSum: value },
     });
   }
   rating.value = value;
+  rating.note = note;
   rating = await rating.save();
   res.json({ rating });
 });
@@ -68,10 +76,14 @@ router.get('/customer/bycontractor/:contractorid', async function (req, res) {
 });
 
 // Find job rating
-router.get('/listing/:listingid/:customerid', async function (req, res) {
-  const customerId = req.params.customerid;
-  const listingId = req.params.customerid;
-  let rating = await JobRating.findOne({ customerId, listingId });
+router.get('/listingRating/:listingid', async function (req, res) {
+  const listingId = req.params.listingid;
+  const token = req.headers.authorization.split('Bearer ')[1];
+  if (!token) return res.status(401).json({ msg: 'No token' });
+  const decoded = jwt.verify(token, jwtSecret);
+  const user = decoded;
+
+  let rating = await JobRating.findOne({ customerId: user.id, listingId });
   res.json({ rating });
 });
 

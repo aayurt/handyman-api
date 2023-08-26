@@ -8,11 +8,8 @@ const auth = require('../../middleware/auth');
 
 // models
 const Application = require('../../models/Application');
-const Customer = require('../../models/Customer');
 const Listing = require('../../models/Listing');
 const Category = require('../../models/Category');
-
-const statuses = ['Applied', 'Shortlisted', 'Rejected', 'Accepted'];
 
 // Create Application
 router.post('/', async function (req, res) {
@@ -222,8 +219,8 @@ router.get('/bycontractor', async function (req, res) {
 router.put('/:id', async function (req, res) {
   const id = req.params.id;
 
-  const { status, selectedTimeSlots } = req.body;
-
+  const { status, selectedTimeSlots, paymentMethod, note, upaymentStatus } =
+    req.body;
   const token = req.headers.authorization.split('Bearer ')[1];
   if (!token) return res.status(401).json({ msg: 'No token' });
 
@@ -233,14 +230,61 @@ router.put('/:id', async function (req, res) {
   const application = await Application.findById(id);
   if (!application) return res.sendStatus(400);
 
+  let paymentStatus = 'unpaid';
+
+  if (paymentMethod === 'stripe') {
+    paymentStatus = 'paid';
+  }
+
   if (application.status === 'pending' && user.type === 'Customer') {
     const formattedTimeSlotData = {};
+    if (selectedTimeSlots) {
+      Object.keys(selectedTimeSlots).forEach((dateString) => {
+        formattedTimeSlotData[moment(dateString).format('L')] =
+          selectedTimeSlots[dateString];
+      });
+      application.selectedTimeSlots = formattedTimeSlotData;
+    }
 
-    Object.keys(selectedTimeSlots).forEach((dateString) => {
-      formattedTimeSlotData[moment(dateString).format('L')] =
-        selectedTimeSlots[dateString];
-    });
-    application.selectedTimeSlots = formattedTimeSlotData;
+    application.paymentMethod = paymentMethod;
+    application.paymentStatus = paymentStatus;
+    application.note = note;
+
+    application
+      .save()
+      .then((application) => {
+        res.json({ data: application });
+      })
+      .catch((e) => {
+        return res.status(400).json({ msg: 'Error' });
+      });
+  } else if (
+    (application.status === 'accepted' || application.status === 'completed') &&
+    user.type === 'Customer'
+  ) {
+    const formattedTimeSlotData = {};
+    if (selectedTimeSlots) {
+      Object.keys(selectedTimeSlots).forEach((dateString) => {
+        formattedTimeSlotData[moment(dateString).format('L')] =
+          selectedTimeSlots[dateString];
+      });
+      application.selectedTimeSlots = formattedTimeSlotData;
+    }
+
+    application.paymentMethod = paymentMethod;
+    application.note = note;
+    application.paymentStatus = paymentStatus;
+
+    application
+      .save()
+      .then((application) => {
+        res.json({ data: application });
+      })
+      .catch((e) => {
+        return res.status(400).json({ msg: 'Error' });
+      });
+  } else if (user.type === 'Contractor') {
+    application.paymentStatus = upaymentStatus;
     application
       .save()
       .then((application) => {

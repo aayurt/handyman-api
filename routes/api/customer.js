@@ -16,7 +16,7 @@ const Listing = require('../../models/Listing');
 
 // Register customer
 router.post('/', (req, res) => {
-  let { name, email, password, phone, avatar, address, location, gender } =
+  let { name, email, password, phone, avatar, address, location, gender, bio } =
     req.body;
 
   if (!name || !email || !password || !phone)
@@ -29,10 +29,9 @@ router.post('/', (req, res) => {
     return res.status(400).json({ msg: 'Invalid email' });
   }
   phone = phone.trim();
-  const phoneRe = /^[0-9]{4}$/;
-  if (!phoneRe.test(phone)) {
-    return res.status(400).json({ msg: 'Invalid phone number' });
-  }
+  // if (!phoneRe.test(phone)) {
+  // return res.status(400).json({ msg: 'Invalid phone number' });
+  // }
   Customer.findOne({ email })
     .then((user) => {
       if (user) return res.status(400).json({ msg: 'User already exists' });
@@ -44,8 +43,9 @@ router.post('/', (req, res) => {
         phone,
         avatar,
         address,
+        bio,
+        location,
       });
-      newUser.bio = '';
 
       bcrypt.genSalt(10, (err, salt) => {
         if (err) throw err;
@@ -71,6 +71,7 @@ router.post('/', (req, res) => {
               );
             })
             .catch((err) => {
+              console.log(err);
               return res.status(500).json({ msg: 'Internal error' });
             });
         });
