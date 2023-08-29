@@ -47,7 +47,9 @@ router.post('/', async function (req, res) {
     listing: listingId,
     customer: customerId,
   });
-  if (application) return res.status(400).json({ msg: 'Already applied' });
+
+  if (application.status === 'accepted' || application.status === 'pending')
+    return res.status(400).json({ msg: 'Already applied' });
 
   const formattedTimeSlotData = {};
 
@@ -219,8 +221,14 @@ router.get('/bycontractor', async function (req, res) {
 router.put('/:id', async function (req, res) {
   const id = req.params.id;
 
-  const { status, selectedTimeSlots, paymentMethod, note, upaymentStatus } =
-    req.body;
+  const {
+    status,
+    selectedTimeSlots,
+    paymentMethod,
+    note,
+    upaymentStatus,
+    amount,
+  } = req.body;
   const token = req.headers.authorization.split('Bearer ')[1];
   if (!token) return res.status(401).json({ msg: 'No token' });
 
@@ -249,6 +257,7 @@ router.put('/:id', async function (req, res) {
     application.paymentMethod = paymentMethod;
     application.paymentStatus = paymentStatus;
     application.note = note;
+    application.amount = amount;
 
     application
       .save()
@@ -274,6 +283,7 @@ router.put('/:id', async function (req, res) {
     application.paymentMethod = paymentMethod;
     application.note = note;
     application.paymentStatus = paymentStatus;
+    application.amount = amount;
 
     application
       .save()

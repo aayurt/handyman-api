@@ -30,7 +30,10 @@ const ApplicationSchema = new Schema({
     enum: ['cod', 'esewa', 'paypal', 'stripe'],
     default: 'cod',
   },
-
+  amount: {
+    type: Number,
+    default: 0,
+  },
   paymentStatus: {
     type: String,
     enum: ['paid', 'unpaid', 'failed'],
