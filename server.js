@@ -30,6 +30,7 @@ app.use('/api/uploads', express.static(path.join(__dirname, 'uploads')));
 
 app.use('/api/contractor', require('./routes/api/contractor'));
 app.use('/api/listing', require('./routes/api/listing'));
+app.use('/api/chat', require('./routes/api/chat'));
 app.use('/api/category', require('./routes/api/category'));
 app.use('/api/customer', require('./routes/api/customer'));
 app.use('/api/application', require('./routes/api/application'));

@@ -37,7 +37,8 @@ router.post('/customer', auth('Contractor'), async function (req, res) {
 
 // Rate job
 router.post('/listing', auth('Customer'), async function (req, res) {
-  const { value, listingId, note } = req.body;
+  const { value, listingId, note, applicationId } = req.body;
+
   const token = req.headers.authorization.split('Bearer ')[1];
   if (!token) return res.status(401).json({ msg: 'No token' });
 
@@ -48,9 +49,19 @@ router.post('/listing', auth('Customer'), async function (req, res) {
   if (value < 0 || value > 5)
     return res.status(400).json({ msg: 'Rating must be between 0 and 5' });
 
-  let rating = await JobRating.findOne({ customerId: user.id, listingId });
+  let rating = await JobRating.findOne({
+    customerId: user.id,
+    listingId,
+    applicationId,
+  });
   if (!rating) {
-    rating = new JobRating({ listingId, customerId: user.id, value, note });
+    rating = new JobRating({
+      listingId,
+      applicationId,
+      customerId: user.id,
+      value,
+      note,
+    });
     await Listing.findByIdAndUpdate(listingId, {
       $inc: { numRatings: 1, ratingSum: value },
     });
@@ -76,14 +87,15 @@ router.get('/customer/bycontractor/:contractorid', async function (req, res) {
 });
 
 // Find job rating
-router.get('/listingRating/:listingid', async function (req, res) {
-  const listingId = req.params.listingid;
+router.get('/listingRating/:applicationId', async function (req, res) {
+  const applicationId = req.params.applicationId;
   const token = req.headers.authorization.split('Bearer ')[1];
   if (!token) return res.status(401).json({ msg: 'No token' });
   const decoded = jwt.verify(token, jwtSecret);
   const user = decoded;
+  console.log('applicationId', { applicationId });
 
-  let rating = await JobRating.findOne({ customerId: user.id, listingId });
+  let rating = await JobRating.findOne({ customerId: user.id, applicationId });
   res.json({ rating });
 });
 

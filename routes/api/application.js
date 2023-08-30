@@ -48,7 +48,10 @@ router.post('/', async function (req, res) {
     customer: customerId,
   });
 
-  if (application.status === 'accepted' || application.status === 'pending')
+  if (
+    application &&
+    (application.status === 'accepted' || application.status === 'pending')
+  )
     return res.status(400).json({ msg: 'Already applied' });
 
   const formattedTimeSlotData = {};

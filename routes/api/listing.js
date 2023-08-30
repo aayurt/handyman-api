@@ -7,6 +7,8 @@ const auth = require('../../middleware/auth');
 
 // Listing model
 const Listing = require('../../models/Listing');
+const Application = require('../../models/Application');
+const JobRating = require('../../models/JobRating');
 
 // Create listing
 router.post('/', auth('Contractor'), (req, res) => {
@@ -74,8 +76,61 @@ router.get('/', (req, res) => {
   } else {
     Listing.find({})
       .populate('category', 'id title')
-      .then((listings) => res.json({ data: listings }))
-      .catch((err) => res.sendStatus(400));
+      .then(async (listings) => {
+        const fetchRatingsPromises = listings.map(async (listing) => {
+          try {
+            const ratings = await JobRating.find({
+              listingId: listing.id,
+            });
+
+            return {
+              ...listing.toObject(),
+              ratings,
+            };
+          } catch (error) {
+            console.log('Error fetching ratings:', error);
+            throw error; // Rethrow the error to be caught later
+          }
+        });
+
+        try {
+          const newListings = await Promise.all(fetchRatingsPromises);
+
+          for (let index = 0; index < newListings.length; index++) {
+            const listing = newListings[index];
+            const ratings = listing.ratings;
+
+            if (ratings.length > 0) {
+              let totalRating = 0;
+
+              for (
+                let ratingIndex = 0;
+                ratingIndex < ratings.length;
+                ratingIndex++
+              ) {
+                const ratingValue = ratings[ratingIndex].value;
+                totalRating += ratingValue;
+              }
+
+              const averageRating = totalRating / ratings.length;
+              listing.rating = averageRating;
+            } else {
+              listing.rating = 0; // No ratings, set default rating
+            }
+
+            delete listing.ratings; // Remove the ratings array from the listing
+          }
+
+          res.json({ data: newListings });
+        } catch (error) {
+          console.log('Error fetching ratings for some listings:', error);
+          res.sendStatus(500);
+        }
+      })
+      .catch((err) => {
+        console.log('Error fetching listings:', err);
+        res.sendStatus(400);
+      });
   }
 });
 // Get all listings
