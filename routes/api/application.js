@@ -94,7 +94,14 @@ router.get('/bycustomer', (req, res) => {
   Application.find({ customer: customerId })
     .lean()
     .populate({
-      path: 'customer listing',
+      path: 'customer',
+    })
+
+    .populate({
+      path: 'listing',
+      populate: {
+        path: 'contractor',
+      },
     })
     .then(async (applications) => {
       const newApplicationPromises = applications.map(async (element) => {
@@ -121,7 +128,13 @@ router.get('/bylisting/:listingid', (req, res) => {
   const listingId = req.params.listingid;
   Application.find({ listing: listingId })
     .populate({
-      path: 'customer listing',
+      path: 'customer',
+    })
+    .populate({
+      path: 'listing',
+      populate: {
+        path: 'contractor',
+      },
     })
     .lean()
     .then(async (applications) => {
@@ -148,7 +161,13 @@ router.get('/app/:id', (req, res) => {
   Application.findById(id)
     .lean()
     .populate({
-      path: 'customer listing',
+      path: 'customer',
+    })
+    .populate({
+      path: 'listing',
+      populate: {
+        path: 'contractor',
+      },
     })
     .then(async (application) => {
       const newApplication = { ...application };
@@ -181,16 +200,21 @@ router.get('/bycontractor', async function (req, res) {
     }
     const contractorId = user.id;
 
-    let listings = await Listing.find({ 'contractor.id': contractorId });
+    let listings = await Listing.find({ contractor: contractorId });
     listings = listings.map((listing) => listing.id);
-    console.log('listings', listings);
 
     Application.find({
       listing: { $in: listings },
     })
       .lean()
       .populate({
-        path: 'customer listing',
+        path: 'customer',
+      })
+      .populate({
+        path: 'listing',
+        populate: {
+          path: 'contractor',
+        },
       })
       .then(async (applications) => {
         console.log('applications', applications);
@@ -264,6 +288,7 @@ router.put('/:id', async function (req, res) {
     application.note = note;
     application.amount = amount;
     application.description = description;
+    application.status = status;
 
     application
       .save()
@@ -291,6 +316,7 @@ router.put('/:id', async function (req, res) {
     application.paymentStatus = paymentStatus;
     application.amount = amount;
     application.description = description;
+    application.status = status;
 
     application
       .save()
@@ -303,6 +329,7 @@ router.put('/:id', async function (req, res) {
   } else if (user.type === 'Contractor') {
     application.paymentStatus = upaymentStatus;
     application.description = description;
+    application.status = status;
 
     application
       .save()

@@ -29,6 +29,7 @@ router.post('/', auth('Contractor'), (req, res) => {
     payRate,
     thumbnailImage,
     description,
+    category,
   } = req.body;
 
   if (!title || deadlineDate === null || !payRate) {
@@ -43,7 +44,8 @@ router.post('/', auth('Contractor'), (req, res) => {
     payRate,
     description,
     thumbnailImage,
-    contractor: user._id,
+    contractor: user.id,
+    category,
   });
   newListing
     .save()
@@ -90,7 +92,7 @@ router.get('/', (req, res) => {
   const user = decoded;
 
   if (user.type === 'Contractor') {
-    Listing.find({ 'contractor.id': user.id })
+    Listing.find({ contractor: user.id })
       .populate('category', 'id title')
       .populate('contractor')
       .then((listings) => res.json({ data: listings }))
@@ -170,7 +172,7 @@ router.get('/search/:search', (req, res) => {
     user.type === 'Contractor'
       ? {
           $or: [
-            { 'contractor.id': user.id },
+            { contractor: user.id },
             { 'category.title': { $regex: searchTerm, $options: 'i' } }, // Case-insensitive regex search for category title
             { title: { $regex: searchTerm, $options: 'i' } }, // Case-insensitive regex search for listing title
           ],
@@ -208,7 +210,7 @@ router.get('/:id', (req, res) => {
 // Get Listing by contractor
 router.get('/bycontractor/:contractorid', (req, res) => {
   const contractorId = req.params.contractorid;
-  Listing.find({ 'contractor.id': contractorId })
+  Listing.find({ contractor: contractorId })
     .lean()
     .then((listings) => res.json({ listings }))
     .catch((err) => {
