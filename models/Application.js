@@ -10,6 +10,9 @@ const ApplicationSchema = new Schema({
     ref: Customer,
     required: true,
   },
+  description: {
+    type: String,
+  },
   status: {
     type: String,
     required: true,

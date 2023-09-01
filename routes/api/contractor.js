@@ -17,8 +17,17 @@ const Listing = require('../../models/Listing');
 
 // Register Contractor
 router.post('/', (req, res) => {
-  let { name, email, password, phone, avatar, address, location, gender } =
-    req.body;
+  let {
+    name,
+    email,
+    password,
+    phone,
+    avatar,
+    address,
+    location,
+    gender,
+    fcmToken,
+  } = req.body;
 
   if (!name || !email || !password || !phone || !address)
     return res.status(400).json({ msg: 'Enter all credentials' });
@@ -48,6 +57,7 @@ router.post('/', (req, res) => {
         avatar,
         address,
         location,
+        fcmToken,
       });
       newUser.bio = '';
       newUser.skills = [];
@@ -114,12 +124,11 @@ router.put('/:id', auth('Contractor'), (req, res) => {
     education,
     interests,
     experiences,
-    linkedIn,
-    github,
-    website,
+
     avatar,
     address,
     location,
+    fcmToken,
   } = req.body;
   Contractor.findById(id)
     .then((user) => {
@@ -137,9 +146,7 @@ router.put('/:id', auth('Contractor'), (req, res) => {
       if (education) user.education = education;
       if (interests) user.interests = interests;
       if (experiences) user.experiences = experiences;
-      if (linkedIn) user.linkedIn = linkedIn;
-      if (github) user.github = github;
-      if (website) user.website = website;
+      if (fcmToken) user.fcmToken = fcmToken;
 
       user.save().then((updatedUser) => {
         //const {password, ...userToSend} = updatedUser.toObject();

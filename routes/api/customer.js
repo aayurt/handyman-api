@@ -45,6 +45,7 @@ router.post('/', (req, res) => {
         address,
         bio,
         location,
+        fcmToken,
       });
 
       bcrypt.genSalt(10, (err, salt) => {
@@ -172,6 +173,8 @@ router.put('/:id', auth('Customer'), (req, res) => {
       if (avatar) user.avatar = avatar;
       if (address) user.address = address;
       if (location) user.location = location;
+      if (fcmToken) user.fcmToken = fcmToken;
+
       user.save().then((updatedUser) => {
         const { password, ...userToSend } = updatedUser.toObject();
         res.json({ user: userToSend });

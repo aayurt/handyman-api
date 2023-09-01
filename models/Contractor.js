@@ -15,6 +15,7 @@ const ContractorSchema = new Schema({
   },
   avatar: { type: String, default: '' },
   address: { type: String, default: '' },
+  fcmToken: { type: String, default: '' },
   location: {
     type: {
       type: String,

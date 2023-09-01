@@ -13,7 +13,7 @@ const Category = require('../../models/Category');
 
 // Create Application
 router.post('/', async function (req, res) {
-  const { listingId, selectedTimeSlots } = req.body;
+  const { listingId, selectedTimeSlots, description } = req.body;
   const token = req.headers.authorization.split('Bearer ')[1];
   if (!token) return res.status(401).json({ msg: 'No token' });
 
@@ -65,6 +65,7 @@ router.post('/', async function (req, res) {
     listing: listingId,
     customer: customerId,
     selectedTimeSlots: formattedTimeSlotData,
+    description,
   });
   newApplication
     .save()
@@ -231,6 +232,7 @@ router.put('/:id', async function (req, res) {
     note,
     upaymentStatus,
     amount,
+    description,
   } = req.body;
   const token = req.headers.authorization.split('Bearer ')[1];
   if (!token) return res.status(401).json({ msg: 'No token' });
@@ -261,6 +263,7 @@ router.put('/:id', async function (req, res) {
     application.paymentStatus = paymentStatus;
     application.note = note;
     application.amount = amount;
+    application.description = description;
 
     application
       .save()
@@ -287,6 +290,7 @@ router.put('/:id', async function (req, res) {
     application.note = note;
     application.paymentStatus = paymentStatus;
     application.amount = amount;
+    application.description = description;
 
     application
       .save()
@@ -298,6 +302,8 @@ router.put('/:id', async function (req, res) {
       });
   } else if (user.type === 'Contractor') {
     application.paymentStatus = upaymentStatus;
+    application.description = description;
+
     application
       .save()
       .then((application) => {

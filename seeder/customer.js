@@ -48,8 +48,16 @@ const numberOfCustomers = 10;
 const customerData = [];
 
 for (let i = 0; i < numberOfCustomers; i++) {
-  generateRandomCustomer().then((val) => {
-    customerData.push(val);
+  customerData.push({
+    name: 'test',
+    email: 'test2@gmail.com',
+    password: '$2a$10$7r3oXPP4opNLVUBeGdrrEeveep720I1kTVBQxXLEoUtH4w9SN.1yS',
+    gender: 'male',
+    phone: '(533) 518-7340 x280',
+    bio: 'Omnis quas inventore ipsam tenetur aliquam.',
+    avatar: '/uploads/profile/test.jpg',
+    address: '26 Strand Court, 33 Strandfield Close',
+    location: { type: 'Point', coordinates: [51.5, 0.127] },
   });
 }
 module.exports = { customerData };

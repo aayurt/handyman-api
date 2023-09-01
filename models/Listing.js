@@ -4,6 +4,7 @@ const Schema = mongoose.Schema;
 
 const ListingSchema = new Schema({
   title: { type: String, required: true },
+  description: { type: String },
   thumbnailImage: {
     type: String,
     default: '/uploads/profile/test.png',

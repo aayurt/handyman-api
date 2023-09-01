@@ -22,7 +22,14 @@ router.post('/', auth('Contractor'), (req, res) => {
     return res.status(401).json({ msg: 'User is not a contractor' });
   }
 
-  const { title, deadlineDate, duration, payRate, thumbnailImage } = req.body;
+  const {
+    title,
+    deadlineDate,
+    duration,
+    payRate,
+    thumbnailImage,
+    description,
+  } = req.body;
 
   if (!title || deadlineDate === null || !payRate) {
     return res.status(400).json({ msg: 'Enter all fields' });
@@ -39,6 +46,7 @@ router.post('/', auth('Contractor'), (req, res) => {
           deadlineDate,
           duration,
           payRate,
+          description,
           thumbnailImage,
           contractor: {
             id: user._id,
@@ -189,7 +197,8 @@ router.get('/bycontractor/:contractorid', (req, res) => {
 // Update listing
 router.put('/:id', auth('Contractor'), (req, res) => {
   const id = req.params.id;
-  const { title, deadlineDate, duration, payRate, thumbnailImage } = req.body;
+  const { title, deadlineDate, description, payRate, thumbnailImage } =
+    req.body;
   const errors = [];
   Listing.findById(id)
     .then((listing) => {
@@ -201,6 +210,7 @@ router.put('/:id', auth('Contractor'), (req, res) => {
           listing.title = title;
           listing.payRate = payRate;
           listing.thumbnailImage = thumbnailImage;
+          listing.description = description;
         }
       }
       if (errors.length != 0) return res.status(400).json({ errors });

@@ -15,6 +15,7 @@ const CustomerSchema = new Schema({
   bio: { type: String, default: '' },
   avatar: { type: String, default: '' },
   address: { type: String, default: '' },
+  fcmToken: { type: String, default: '' },
   location: {
     type: {
       type: String,

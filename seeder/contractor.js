@@ -75,8 +75,67 @@ const numberOfProfiles = 10;
 const contractorData = [];
 
 for (let i = 0; i < numberOfProfiles; i++) {
-  generateRandomProfile().then((val) => {
-    contractorData.push(val);
+  contractorData.push({
+    name: 'Manish',
+    email: 'mg@gmail.com',
+    password: password,
+    phone: '1-418-653-8049',
+    bio: 'Facilis saepe blanditiis non magni vel qui ipsum numquam error.',
+    gender: 'female',
+    avatar: '/uploads/profile/test.jpg',
+    address: '5769 Cremin Divide',
+    location: { type: 'Point', coordinates: [51.514852, 0.127262] },
+    skills: ['reflect', 'tailgate', 'avow'],
+    experiences: [
+      {
+        employerName: 'Ziemann - Walter',
+        startYear: '2022',
+        role: 'Dynamic Infrastructure Planner',
+        endYear: '2023',
+        _id: { $oid: '64e77720747aa46ca6c44f5e' },
+      },
+    ],
+    education: [
+      {
+        instituteName: 'Lowe LLC',
+        startYear: '2023',
+        endYear: '2023',
+        _id: { $oid: '64e77720747aa46ca6c44f5f' },
+      },
+    ],
+    numRatings: 0,
+    ratingSum: 0,
+  });
+  contractorData.push({
+    name: 'ManishG',
+    email: 'mg1@gmail.com',
+    password: password,
+    phone: '1-418-653-8049',
+    bio: 'Facilis saepe blanditiis non magni vel qui ipsum numquam error.',
+    gender: 'female',
+    avatar: '/uploads/profile/test.jpg',
+    address: '5769 Cremin Divide',
+    location: { type: 'Point', coordinates: [51.514852, 0.127262] },
+    skills: ['reflect', 'tailgate', 'avow'],
+    experiences: [
+      {
+        employerName: 'Ziemann - Walter',
+        startYear: '2022',
+        role: 'Dynamic Infrastructure Planner',
+        endYear: '2023',
+        _id: { $oid: '64e77720747aa46ca6c44f5e' },
+      },
+    ],
+    education: [
+      {
+        instituteName: 'Lowe LLC',
+        startYear: '2023',
+        endYear: '2023',
+        _id: { $oid: '64e77720747aa46ca6c44f5f' },
+      },
+    ],
+    numRatings: 0,
+    ratingSum: 0,
   });
 }
 

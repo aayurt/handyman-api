@@ -186,6 +186,7 @@ router.patch('/profile', (req, res) => {
         avatar,
         address,
         location,
+        fcmToken,
       } = req.body;
       Contractor.findById(id)
         .then((user) => {
@@ -206,6 +207,7 @@ router.patch('/profile', (req, res) => {
           if (linkedIn) user.linkedIn = linkedIn;
           if (github) user.github = github;
           if (website) user.website = website;
+          if (fcmToken) user.fcmToken = fcmToken;
 
           user.save().then((updatedUser) => {
             //const {password, ...userToSend} = updatedUser.toObject();
@@ -246,6 +248,8 @@ router.patch('/profile', (req, res) => {
           if (avatar) user.avatar = avatar;
           if (address) user.address = address;
           if (location) user.location = location;
+          if (fcmToken) user.fcmToken = fcmToken;
+
           user.save().then((updatedUser) => {
             const { password, ...userToSend } = updatedUser.toObject();
             res.json({ user: userToSend });
