@@ -1,21 +1,21 @@
 // db.once('open', function () {
 //   console.log('Connected to MongoDB database');
 
-const { customerData } = require('./Customer');
-const { contractorData } = require('./contractor');
+const { customerData } = require("./Customer");
+const { contractorData } = require("./contractor");
 
 // });
-const Contractor = require('../models/Contractor');
-const Customer = require('../models/Customer');
-const { default: mongoose } = require('mongoose');
-const db = require('../config/keys');
-const { generateListing } = require('./listing');
-const Listing = require('../models/Listing');
-const Category = require('../models/Category');
-const { generateCategories } = require('./categories');
+const Contractor = require("../models/Contractor");
+const Customer = require("../models/Customer");
+const { default: mongoose } = require("mongoose");
+const db = require("../config/keys");
+const { generateListing } = require("./listing");
+const Listing = require("../models/Listing");
+const Category = require("../models/Category");
+const { generateCategories } = require("./categories");
 
 const seedData = async () => {
-  console.log('SEEDING');
+  console.log("SEEDING");
   console.log(contractorData);
   console.log(customerData);
   // Connect to DB
@@ -24,7 +24,7 @@ const seedData = async () => {
       dbName: db.dbName,
     })
     .then(async () => {
-      console.log('Connected to database', db.mongoURI + '/' + db.dbName);
+      console.log("Connected to database", db.mongoURI + "/" + db.dbName);
       try {
         await Contractor.deleteMany();
         await Customer.deleteMany();
@@ -46,16 +46,26 @@ const seedData = async () => {
         });
 
         contractorListOb.forEach((element) => {
-          for (let i = 0; i < 10; i++) {
+          const titles = [
+            "listing1",
+            "listing2",
+            "listing3",
+            "listing4",
+            "listing5",
+            "listing6",
+            "listing7",
+            "listing8",
+          ];
+          for (let i = 0; i < titles.length; i++) {
             var randomIndex = Math.floor(Math.random() * categoryIdList.length);
             var randomElement = categoryIdList[randomIndex];
-            listings.push(generateListing(element, randomElement));
+            listings.push(generateListing(element, randomElement, titles[i]));
           }
         });
         await Listing.insertMany(listings);
 
-        console.log('Users seeded successfully.');
-        console.log('Seed completed.');
+        console.log("Users seeded successfully.");
+        console.log("Seed completed.");
 
         process.exit();
       } catch (error) {
@@ -69,13 +79,13 @@ const destroyData = async () => {
   try {
     await User.deleteMany({
       email: {
-        $in: ['admin@gmail.com', 'user@gmail.com'],
+        $in: ["admin@gmail.com", "user@gmail.com"],
       },
     });
 
-    console.log('Users Destroyed!');
+    console.log("Users Destroyed!");
 
-    console.log('Destroy completed.');
+    console.log("Destroy completed.");
     process.exit();
   } catch (error) {
     console.error(error);
@@ -83,7 +93,7 @@ const destroyData = async () => {
   }
 };
 
-if (process.argv[2] === '-d') {
+if (process.argv[2] === "-d") {
   destroyData();
 } else {
   seedData();
