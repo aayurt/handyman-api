@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const Category = require('./Category');
+const Contractor = require('./Contractor');
 const Schema = mongoose.Schema;
 
 const ListingSchema = new Schema({
@@ -22,22 +23,7 @@ const ListingSchema = new Schema({
   payRate: { type: Number, required: true },
   numRatings: { type: Number, required: true, default: 0 },
   ratingSum: { type: Number, required: true, default: 0 },
-  contractor: {
-    id: { type: Schema.Types.ObjectId, ref: 'Contractor', required: true },
-    name: { type: String, required: true },
-    email: { type: String, required: true },
-    location: {
-      type: {
-        type: String,
-        enum: ['Point'],
-        required: true,
-      },
-      coordinates: {
-        type: [Number], // [longitude, latitude]
-        required: true,
-      },
-    },
-  },
+  contractor: { type: Schema.Types.ObjectId, ref: Contractor, required: true },
   deleted: { type: Boolean, default: false },
 });
 

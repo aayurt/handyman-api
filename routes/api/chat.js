@@ -20,15 +20,15 @@ router.post('/', (req, res) => {
     return res.status(401).json({ msg: 'User is not a contractor' });
   }
 
-  const { customerId, contractorId, msg } = req.body;
+  const { customer, contractor, msg } = req.body;
 
-  if (!customerId || !msg || !contractorId) {
+  if (!customer || !msg || !contractor) {
     return res.status(400).json({ msg: 'Enter all fields' });
   }
 
   const chat = new Chat({
-    customerId,
-    contractorId,
+    customer,
+    contractor,
     msg,
   });
   chat
@@ -42,12 +42,12 @@ router.post('/', (req, res) => {
 // Update chat
 router.put('/:id', auth('Contractor'), (req, res) => {
   const id = req.params.id;
-  const { contractorId, customerId, msg } = req.body;
+  const { contractor, customer, msg } = req.body;
   const errors = [];
   Chat.findById(id)
     .then((chat) => {
-      chat.contractorId = contractorId;
-      chat.customerId = customerId;
+      chat.contractor = contractor;
+      chat.customer = customer;
       chat.msg = msg;
       if (errors.length != 0) return res.status(400).json({ errors });
       else {
@@ -71,11 +71,14 @@ router.get('/', (req, res) => {
   const user = decoded;
 
   if (user.type === 'Contractor') {
-    Chat.find({ contractorId: user.id })
+    Chat.find({ contractor: user.id })
+      .populate({
+        path: 'customer contractor',
+      })
       .then((chats) => res.json({ data: chats }))
       .catch((err) => res.sendStatus(400));
   } else {
-    Chat.find({ customerId: user.id })
+    Chat.find({ customer: user.id })
       .then((chats) => res.json({ data: chats }))
       .catch((err) => res.sendStatus(400));
   }

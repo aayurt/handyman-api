@@ -36,36 +36,49 @@ router.post('/', auth('Contractor'), (req, res) => {
   }
 
   // TODO validations
-  Contractor.findById(user.id)
-    .select('-password')
-    .lean()
-    .then((user) => {
-      if (user) {
-        const newListing = new Listing({
-          title,
-          deadlineDate,
-          duration,
-          payRate,
-          description,
-          thumbnailImage,
-          contractor: {
-            id: user._id,
-            name: user.name,
-            email: user.email,
-            location: user.location,
-          },
-        });
-        newListing
-          .save()
-          .then((listing) => res.json({ listing }))
-          .catch((err) => res.status(500).json({ msg: err }));
-      } else {
-        return res.status(400).json({ msg: 'Invalid token' });
-      }
-    })
-    .catch((err) => {
-      return res.status(400).json({ msg: 'Invalid token' });
-    });
+  const newListing = new Listing({
+    title,
+    deadlineDate,
+    duration,
+    payRate,
+    description,
+    thumbnailImage,
+    contractor: user._id,
+  });
+  newListing
+    .save()
+    .then((listing) => res.json({ listing }))
+    .catch((err) => res.status(500).json({ msg: err }));
+  // Contractor.findById(user.id)
+  //   .select('-password')
+  //   .lean()
+  //   .then((user) => {
+  //     if (user) {
+  //       const newListing = new Listing({
+  //         title,
+  //         deadlineDate,
+  //         duration,
+  //         payRate,
+  //         description,
+  //         thumbnailImage,
+  //         contractor: {
+  //           _id: user._id,
+  //           name: user.name,
+  //           email: user.email,
+  //           location: user.location,
+  //         },
+  //       });
+  //       newListing
+  //         .save()
+  //         .then((listing) => res.json({ listing }))
+  //         .catch((err) => res.status(500).json({ msg: err }));
+  //     } else {
+  //       return res.status(400).json({ msg: 'Invalid token' });
+  //     }
+  //   })
+  //   .catch((err) => {
+  //     return res.status(400).json({ msg: 'Invalid token' });
+  //   });
 });
 
 // Get all listings
@@ -177,7 +190,13 @@ router.get('/:id', (req, res) => {
   Listing.findById(id)
     .lean()
     .populate('category', '_id title')
-    .then((listing) => res.json({ data: listing }))
+    .populate('contractor', '_id name')
+
+    .then((listing) => {
+      console.log('===', listing);
+
+      return res.json({ data: listing });
+    })
     .catch((err) => {
       return res.sendStatus(400);
     });

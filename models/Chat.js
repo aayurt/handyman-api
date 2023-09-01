@@ -4,12 +4,12 @@ const Customer = require('./Customer');
 const Schema = mongoose.Schema;
 
 const ChatSchema = new Schema({
-  contractorId: {
+  contractor: {
     type: Schema.Types.ObjectId,
     ref: Contractor,
     required: true,
   },
-  customerId: {
+  customer: {
     type: Schema.Types.ObjectId,
     ref: Customer,
     required: true,
