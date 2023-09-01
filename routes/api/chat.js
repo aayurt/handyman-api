@@ -16,21 +16,20 @@ router.post('/', (req, res) => {
   const decoded = jwt.verify(token, jwtSecret);
   const user = decoded;
 
-  if (user.type !== 'Contractor') {
-    return res.status(401).json({ msg: 'User is not a contractor' });
-  }
+  const { clientId, msg } = req.body;
 
-  const { customer, contractor, msg } = req.body;
-
-  if (!customer || !msg || !contractor) {
+  if (!clientId || !msg) {
     return res.status(400).json({ msg: 'Enter all fields' });
   }
-
-  const chat = new Chat({
-    customer,
-    contractor,
-    msg,
-  });
+  let chatModel = { msg };
+  if (user.type === 'Contractor') {
+    chatModel.contractor = user.id;
+    chatModel.customer = clientId;
+  } else {
+    chatModel.customer = user.id;
+    chatModel.contractor = clientId;
+  }
+  const chat = new Chat(chatModel);
   chat
     .save()
     .then((chat) => res.json({ chat }))
@@ -42,7 +41,7 @@ router.post('/', (req, res) => {
 // Update chat
 router.put('/:id', auth('Contractor'), (req, res) => {
   const id = req.params.id;
-  const { contractor, customer, msg } = req.body;
+  const { clientId, msg } = req.body;
   const errors = [];
   Chat.findById(id)
     .then((chat) => {

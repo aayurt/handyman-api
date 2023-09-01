@@ -19,7 +19,7 @@ router.post('/', (req, res) => {
   let { name, email, password, phone, avatar, address, location, gender, bio } =
     req.body;
 
-  if (!name || !email || !password || !phone)
+  if (!name || !email || !password)
     return res.status(400).json({ msg: 'Enter all credentials' });
 
   // Validations

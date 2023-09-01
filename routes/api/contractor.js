@@ -29,7 +29,7 @@ router.post('/', (req, res) => {
     fcmToken,
   } = req.body;
 
-  if (!name || !email || !password || !phone || !address)
+  if (!name || !email || !password || !address)
     return res.status(400).json({ msg: 'Enter all credentials' });
 
   // Validations
@@ -40,10 +40,6 @@ router.post('/', (req, res) => {
   }
 
   phone = phone.trim();
-  const phoneRe = /^[0-9]{4}$/;
-  if (!phoneRe.test(phone)) {
-    return res.status(400).json({ msg: 'Invalid phone number' });
-  }
 
   Contractor.findOne({ email })
     .then((user) => {
