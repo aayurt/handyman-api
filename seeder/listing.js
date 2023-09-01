@@ -3,12 +3,7 @@ const { faker } = require("@faker-js/faker");
 const generateListing = (contractor, id, title) => {
   const listing = {
     category: id,
-    contractor: {
-      id: contractor._id,
-      name: contractor.name,
-      email: contractor.email,
-      location: contractor.location,
-    },
+    contractor: contractor._id,
     title: title,
     deadlineDate: faker.date.future(),
     // duration: faker.number.int(),
