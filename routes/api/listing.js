@@ -92,11 +92,14 @@ router.get('/', (req, res) => {
   if (user.type === 'Contractor') {
     Listing.find({ 'contractor.id': user.id })
       .populate('category', 'id title')
+      .populate('contractor')
       .then((listings) => res.json({ data: listings }))
       .catch((err) => res.sendStatus(400));
   } else {
     Listing.find({})
       .populate('category', 'id title')
+      .populate('contractor')
+
       .then(async (listings) => {
         const fetchRatingsPromises = listings.map(async (listing) => {
           try {
