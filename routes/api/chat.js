@@ -78,6 +78,9 @@ router.get('/', (req, res) => {
       .catch((err) => res.sendStatus(400));
   } else {
     Chat.find({ customer: user.id })
+      .populate({
+        path: 'customer contractor',
+      })
       .then((chats) => res.json({ data: chats }))
       .catch((err) => res.sendStatus(400));
   }
