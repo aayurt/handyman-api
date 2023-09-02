@@ -110,6 +110,46 @@ router.post('/contractor', (req, res) => {
     });
 });
 
+router.put('/fcm_token', async (req, res) => {
+  try {
+    const token = req.headers.authorization.split('Bearer ')[1];
+    if (!token) return res.status(401).json({ msg: 'No token' });
+
+    const decoded = jwt.verify(token, jwtSecret);
+    const user = decoded;
+
+    const { fcm_token } = req.body;
+    if (user.type == 'Contractor') {
+      const userData = await Contractor.findByIdAndUpdate(
+        user.id,
+        { fcmToken: fcm_token },
+        { new: true }
+      );
+      res.status(200).json({
+        status: true,
+        message: 'FCM token successfully updated.',
+        data: userData,
+      });
+    } else {
+      const userData = await Customer.findByIdAndUpdate(
+        user.id,
+        { fcmToken: fcm_token },
+        { new: true }
+      );
+      res.status(200).json({
+        status: true,
+        message: 'FCM token successfully updated.',
+        data: userData,
+      });
+    }
+  } catch (error) {
+    res.status(400).json({
+      status: false,
+      message: 'Something went wrong while updating FCM token.',
+    });
+  }
+});
+
 // Validate tokens and auth
 router.get('/profile', (req, res) => {
   const token = req.headers.authorization.split('Bearer ')[1];

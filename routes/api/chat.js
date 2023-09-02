@@ -7,9 +7,11 @@ const auth = require('../../middleware/auth');
 
 // chat model
 const Chat = require('../../models/Chat');
+const Contractor = require('../../models/Contractor');
+const Customer = require('../../models/Customer');
 
 // Create chat
-router.post('/', (req, res) => {
+router.post('/', async (req, res) => {
   const token = req.headers.authorization.split('Bearer ')[1];
   if (!token) return res.status(401).json({ msg: 'No token' });
 
@@ -21,18 +23,67 @@ router.post('/', (req, res) => {
   if (!clientId || !msg) {
     return res.status(400).json({ msg: 'Enter all fields' });
   }
-  let chatModel = { msg };
+  let chatModel = { msg, senderId: user.id };
+  let fcm_token = '';
   if (user.type === 'Contractor') {
     chatModel.contractor = user.id;
     chatModel.customer = clientId;
+    await Customer.findById(clientId).then((user) => {
+      fcm_token = user.fcmToken;
+    });
   } else {
     chatModel.customer = user.id;
     chatModel.contractor = clientId;
+    await Contractor.findById(clientId).then((user) => {
+      fcm_token = user.fcmToken;
+    });
   }
+
   const chat = new Chat(chatModel);
   chat
     .save()
-    .then((chat) => res.json({ chat }))
+    .then((chat) => {
+      if (fcm_token != null && fcm_token != '') {
+        let data = JSON.stringify({
+          to: fcm_token,
+          notification: {
+            body: 'Msg Received',
+            OrganizationId: '2',
+            content_available: true,
+            priority: 'high',
+            subtitle: 'Handyman',
+            title: 'Msg Received',
+          },
+          data: {
+            priority: 'high',
+            sound: 'app_sound.wav',
+            content_available: true,
+            bodyText: 'You have a got a new msg.',
+            organization: 'Handyman',
+          },
+        });
+
+        let config = {
+          method: 'post',
+          url: 'https://fcm.googleapis.com/fcm/send',
+          headers: {
+            Authorization: `key=${process.env.FCM_SERVER}`,
+            'Content-Type': 'application/json',
+          },
+          data: data,
+        };
+
+        axios
+          .request(config)
+          .then((response) => {
+            console.log(JSON.stringify(response.data));
+          })
+          .catch((error) => {
+            console.log(error);
+          });
+      }
+      res.json({ chat });
+    })
     .catch((err) => res.status(500).json({ msg: err }));
 });
 

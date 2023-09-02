@@ -14,6 +14,7 @@ const ChatSchema = new Schema({
     ref: Customer,
     required: true,
   },
+  senderId: { type: String, require: true },
   msg: { type: String, require: true },
 });
 
