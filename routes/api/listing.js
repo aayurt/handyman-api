@@ -195,7 +195,7 @@ router.get('/:id', (req, res) => {
   Listing.findById(id)
     .lean()
     .populate('category', '_id title')
-    .populate('contractor', '_id name')
+    .populate('contractor')
 
     .then((listing) => {
       console.log('===', listing);
