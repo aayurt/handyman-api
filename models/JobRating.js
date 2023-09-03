@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 const Listing = require('./Listing');
 const Application = require('./Application');
+const Customer = require('./Customer');
 const Schema = mongoose.Schema;
 
 const JobRatingSchema = new Schema({
@@ -16,7 +17,7 @@ const JobRatingSchema = new Schema({
   },
   customerId: {
     type: Schema.Types.ObjectId,
-    ref: 'Customer',
+    ref: Customer,
     required: true,
   },
   value: { type: Number, required: true, default: 0 },

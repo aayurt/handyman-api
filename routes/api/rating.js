@@ -80,15 +80,20 @@ router.get('/listing/bycustomer/:customerid', async function (req, res) {
 });
 
 // Find customer ratings by contractor
-router.get('/customer/bycontractor/:contractorid', async function (req, res) {
-  const contractorId = req.params.contractorid;
-  const ratings = await CustomerRating.find({ contractorId });
+router.get('/customer/bycontractor/:listingId', async function (req, res) {
+  const listingId = req.params.listingId;
+  const ratings = await JobRating.find({ listingId: listingId }).populate(
+    'customerId'
+  );
+
   res.json({ ratings });
 });
 
 // Find job rating
 router.get('/listingRating/:applicationId', async function (req, res) {
   const applicationId = req.params.applicationId;
+  if (!req.headers.authorization)
+    return res.status(401).json({ msg: 'No token' });
   const token = req.headers.authorization.split('Bearer ')[1];
   if (!token) return res.status(401).json({ msg: 'No token' });
   const decoded = jwt.verify(token, jwtSecret);
