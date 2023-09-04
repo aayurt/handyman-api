@@ -10,6 +10,7 @@ const auth = require('../../middleware/auth');
 // Customer model
 const Customer = require('../../models/Customer');
 const Category = require('../../models/Category');
+const Listing = require('../../models/Listing');
 
 // Register customer
 router.post('/', (req, res) => {
@@ -41,9 +42,23 @@ router.get('/:id', (req, res) => {
   const id = req.params.id;
   Category.findById(id)
     .lean()
-    .populate('listings')
     .then((category) => res.json({ data: category }))
     .catch((err) => {
+      console.log('==>', err);
+
+      return res.sendStatus(400);
+    });
+});
+router.get('/listings/:id', (req, res) => {
+  const id = req.params.id;
+  Listing.find({ category: id })
+    .lean()
+    .populate('category', 'id title')
+    .populate('contractor')
+    .then((listings) => res.json({ data: listings }))
+    .catch((err) => {
+      console.log('==>', err);
+
       return res.sendStatus(400);
     });
 });
