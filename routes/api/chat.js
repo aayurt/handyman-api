@@ -9,6 +9,7 @@ const auth = require('../../middleware/auth');
 const Chat = require('../../models/Chat');
 const Contractor = require('../../models/Contractor');
 const Customer = require('../../models/Customer');
+const { default: axios } = require('axios');
 
 // Create chat
 router.post('/', async (req, res) => {
@@ -72,17 +73,26 @@ router.post('/', async (req, res) => {
           },
           data: data,
         };
+        console.log('===');
+        try {
+          axios
+            .request(config)
+            .then((response) => {
+              console.log(JSON.stringify(response.data));
+              res.json({ chat });
+            })
+            .catch((error) => {
+              console.log(error);
+              res.json({ chat });
+            });
+        } catch (error) {
+          console.log('error', error);
+        }
 
-        axios
-          .request(config)
-          .then((response) => {
-            console.log(JSON.stringify(response.data));
-          })
-          .catch((error) => {
-            console.log(error);
-          });
+        console.log('===');
+      } else {
+        res.json({ chat });
       }
-      res.json({ chat });
     })
     .catch((err) => res.status(500).json({ msg: err }));
 });
