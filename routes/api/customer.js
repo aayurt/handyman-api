@@ -1,32 +1,42 @@
-const express = require('express');
-const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');
+const express = require("express");
+const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
 
 const router = express.Router();
 
-jwtSecret = require('../../config/keys').jwtSecret;
+jwtSecret = require("../../config/keys").jwtSecret;
 
 // Authorization middleware
-const auth = require('../../middleware/auth');
+const auth = require("../../middleware/auth");
 
 // Customer model
-const Customer = require('../../models/Customer');
-const Application = require('../../models/Application');
-const Listing = require('../../models/Listing');
+const Customer = require("../../models/Customer");
+const Application = require("../../models/Application");
+const Listing = require("../../models/Listing");
 
 // Register customer
-router.post('/', (req, res) => {
-  let { name, email, password, phone, avatar, address, location, gender, bio } =
-    req.body;
+router.post("/", (req, res) => {
+  let {
+    name,
+    email,
+    password,
+    phone,
+    avatar,
+    address,
+    location,
+    gender,
+    bio,
+    fcmToken,
+  } = req.body;
 
   if (!name || !email || !password)
-    return res.status(400).json({ msg: 'Enter all credentials' });
+    return res.status(400).json({ msg: "Enter all credentials" });
 
   // Validations
   const emailRe = /\S+@\S+\.\S+/;
   email = email.trim();
   if (!emailRe.test(email)) {
-    return res.status(400).json({ msg: 'Invalid email' });
+    return res.status(400).json({ msg: "Invalid email" });
   }
   phone = phone.trim();
   // if (!phoneRe.test(phone)) {
@@ -34,7 +44,7 @@ router.post('/', (req, res) => {
   // }
   Customer.findOne({ email })
     .then((user) => {
-      if (user) return res.status(400).json({ msg: 'User already exists' });
+      if (user) return res.status(400).json({ msg: "User already exists" });
       const newUser = new Customer({
         name,
         email,
@@ -58,7 +68,7 @@ router.post('/', (req, res) => {
             .then((user) => {
               const { password, ...userToSend } = user.toObject();
               jwt.sign(
-                { id: newUser.id, type: 'Customer' },
+                { id: newUser.id, type: "Customer" },
                 jwtSecret,
                 { expiresIn: 3600 },
                 (err, token) => {
@@ -66,35 +76,36 @@ router.post('/', (req, res) => {
                   res.json({
                     accessToken: token,
                     user: userToSend,
-                    userType: 'Customer',
+                    userType: "Customer",
                   });
                 }
               );
             })
             .catch((err) => {
               console.log(err);
-              return res.status(500).json({ msg: 'Internal error' });
+              return res.status(500).json({ msg: "Internal error" });
             });
         });
       });
     })
     .catch((err) => {
-      return res.status(500).json({ msg: 'Internal error' });
+      console.log(err);
+      return res.status(500).json({ msg: "Internal error" });
     });
 });
 
 // Get all customers
-router.get('/', (req, res) => {
+router.get("/", (req, res) => {
   Customer.find({})
     .then((customers) => res.send({ customers }))
     .catch((err) => res.sendStatus(400));
 });
 
 // Get a customer
-router.get('/:id', (req, res) => {
+router.get("/:id", (req, res) => {
   const id = req.params.id;
   Customer.findById(id)
-    .select('-password')
+    .select("-password")
     .lean()
     .then((user) => res.json({ user }))
     .catch((err) => {
@@ -103,12 +114,12 @@ router.get('/:id', (req, res) => {
 });
 
 // Get customers by listing
-router.get('/bylisting/:listingid', async function (req, res) {
+router.get("/bylisting/:listingid", async function (req, res) {
   const listingId = req.params.listingid;
   let applications = await Application.find({ listingId });
   applications = applications.map((application) => application.customerId);
   Customer.find({ _id: { $in: applications } })
-    .select('-password')
+    .select("-password")
     .lean()
     .then((users) => res.json({ users }))
     .catch((err) => {
@@ -117,16 +128,16 @@ router.get('/bylisting/:listingid', async function (req, res) {
 });
 
 // Get customers accepted by contractor
-router.get('/bycontractor/:contractorid', async function (req, res) {
+router.get("/bycontractor/:contractorid", async function (req, res) {
   try {
     const contractorId = req.params.contractorid;
-    let listings = await Listing.find({ 'contractor.id': contractorId });
+    let listings = await Listing.find({ "contractor.id": contractorId });
     const listingIds = listings.map((listing) => listing.id);
     let applications = await Application.find({
       listingId: { $in: listingIds },
     });
     applications = applications.filter(
-      (application) => application.status === 'Accepted'
+      (application) => application.status === "Accepted"
     );
     const acceptedIds = applications.map(
       (application) => application.customerId
@@ -151,12 +162,12 @@ router.get('/bycontractor/:contractorid', async function (req, res) {
     return res.json({ customers });
   } catch (err) {
     console.log(err);
-    return res.status(500).json({ msg: 'Internal error' });
+    return res.status(500).json({ msg: "Internal error" });
   }
 });
 
 // Update customer
-router.put('/:id', auth('Customer'), (req, res) => {
+router.put("/:id", auth("Customer"), (req, res) => {
   const id = req.params.id;
   const { name, email, phone, bio, avatar, address, location } = req.body;
 
@@ -169,7 +180,7 @@ router.put('/:id', auth('Customer'), (req, res) => {
       if (gender) user.gender = gender;
       if (phone) user.phone = phone;
 
-      if (bio || bio === '') user.bio = bio;
+      if (bio || bio === "") user.bio = bio;
       if (avatar) user.avatar = avatar;
       if (address) user.address = address;
       if (location) user.location = location;
@@ -182,7 +193,7 @@ router.put('/:id', auth('Customer'), (req, res) => {
     })
     .catch((err) => {
       console.log(err);
-      return res.status(404).json({ msg: 'Not found' });
+      return res.status(404).json({ msg: "Not found" });
     });
 });
 
